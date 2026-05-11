@@ -77,10 +77,13 @@ const params = {
   nebulaStrength: 0.6,
 
   // quality
-  resolutionScale: 1.0,
-  steps: 220,
-  stepSize: 0.18,
-  escapeRadius: 60.0,
+  qualityPreset: "Medium",
+  resolutionScale: 0.8,
+  steps: 160,
+  stepSize: 0.22,
+  escapeRadius: 50.0,
+  autoQuality: true,
+  targetFps: 55,
 
   // actions
   resetView: () => {
@@ -89,6 +92,16 @@ const params = {
     controls.update();
   },
   pausedTime: false,
+};
+
+// Quality presets — switching one of these updates the corresponding sliders
+// (and triggers a single `resize`).
+const QUALITY_PRESETS = {
+  Potato: { resolutionScale: 0.45, steps: 80, stepSize: 0.32, escapeRadius: 40 },
+  Low: { resolutionScale: 0.6, steps: 110, stepSize: 0.28, escapeRadius: 45 },
+  Medium: { resolutionScale: 0.8, steps: 160, stepSize: 0.22, escapeRadius: 50 },
+  High: { resolutionScale: 1.0, steps: 220, stepSize: 0.18, escapeRadius: 60 },
+  Ultra: { resolutionScale: 1.25, steps: 320, stepSize: 0.14, escapeRadius: 80 },
 };
 
 // ---------- shader material ----------
@@ -209,36 +222,75 @@ skyFolder
   .onChange((v) => (uniforms.uNebulaStrength.value = v));
 
 const qualityFolder = gui.addFolder("Quality");
+const presetCtrl = qualityFolder
+  .add(params, "qualityPreset", Object.keys(QUALITY_PRESETS))
+  .name("Preset")
+  .onChange((name) => applyPreset(name));
 qualityFolder
-  .add(params, "resolutionScale", 0.4, 2.0, 0.05)
+  .add(params, "autoQuality")
+  .name("Auto adjust")
+  .onChange((v) => {
+    drsState.cooldown = 0;
+    if (!v) drsState.scaleAdj = 1.0;
+  });
+qualityFolder
+  .add(params, "targetFps", 30, 120, 1)
+  .name("Target FPS");
+const resCtrl = qualityFolder
+  .add(params, "resolutionScale", 0.3, 2.0, 0.05)
   .name("Resolution scale")
   .onChange(resize);
-qualityFolder
-  .add(params, "steps", 60, 600, 10)
+const stepsCtrl = qualityFolder
+  .add(params, "steps", 40, 600, 10)
   .name("Ray-march steps")
   .onChange((v) => (uniforms.uMaxSteps.value = Math.round(v)));
-qualityFolder
+const stepSizeCtrl = qualityFolder
   .add(params, "stepSize", 0.05, 0.5, 0.01)
   .name("Step size")
   .onChange((v) => (uniforms.uStepSize.value = v));
-qualityFolder
+const escapeCtrl = qualityFolder
   .add(params, "escapeRadius", 30, 200, 5)
   .name("Escape radius")
   .onChange((v) => (uniforms.uEscapeRadius.value = v));
 qualityFolder.add(params, "pausedTime").name("Pause time");
 
+function applyPreset(name) {
+  const p = QUALITY_PRESETS[name];
+  if (!p) return;
+  Object.assign(params, p);
+  uniforms.uMaxSteps.value = p.steps;
+  uniforms.uStepSize.value = p.stepSize;
+  uniforms.uEscapeRadius.value = p.escapeRadius;
+  drsState.scaleAdj = 1.0;
+  drsState.cooldown = 0;
+  resize();
+  resCtrl.updateDisplay();
+  stepsCtrl.updateDisplay();
+  stepSizeCtrl.updateDisplay();
+  escapeCtrl.updateDisplay();
+}
+
 // fold inner-most folder by default to keep the panel small on first paint
-qualityFolder.close();
 skyFolder.close();
 
 // ---------- resize ----------
+// Dynamic-resolution-scaling state. `scaleAdj` is multiplied into the
+// user-chosen `resolutionScale` and lives between [drsMin, 1.0].
+const drsState = {
+  scaleAdj: 1.0,
+  drsMin: 0.45,
+  cooldown: 0, // seconds until next adjustment is allowed
+  fpsAvg: 60,
+};
+
 function resize() {
   const w = window.innerWidth;
   const h = window.innerHeight;
-  const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
-  const scale = params.resolutionScale;
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  const scale = params.resolutionScale * drsState.scaleAdj;
 
-  // Effective pixel ratio combines device dpr with our quality slider.
+  // Effective pixel ratio combines device dpr, the user's quality slider,
+  // and the auto-DRS adjustment.
   renderer.setPixelRatio(dpr * scale);
   renderer.setSize(w, h, true);
 
@@ -290,14 +342,40 @@ function frame(now) {
 
   renderer.render(scene, fsCamera);
 
-  // FPS HUD
+  // FPS HUD + Auto-DRS
   frames++;
   fpsAccum += dt;
+  drsState.cooldown = Math.max(0, drsState.cooldown - dt);
+
   if (fpsAccum >= 0.5) {
     const fps = frames / fpsAccum;
+    drsState.fpsAvg = drsState.fpsAvg * 0.5 + fps * 0.5;
     fpsEl.textContent = fps.toFixed(0);
     frames = 0;
     fpsAccum = 0;
+
+    if (params.autoQuality && drsState.cooldown === 0) {
+      const target = params.targetFps;
+      const avg = drsState.fpsAvg;
+      let adjusted = false;
+
+      // Too slow → drop internal resolution.
+      if (avg < target - 6 && drsState.scaleAdj > drsState.drsMin) {
+        drsState.scaleAdj = Math.max(drsState.drsMin, drsState.scaleAdj * 0.85);
+        adjusted = true;
+      }
+      // Plenty of headroom → claw resolution back, but never above 1.0
+      // (so we don't fight the user's manual slider).
+      else if (avg > target + 12 && drsState.scaleAdj < 1.0) {
+        drsState.scaleAdj = Math.min(1.0, drsState.scaleAdj * 1.1);
+        adjusted = true;
+      }
+
+      if (adjusted) {
+        drsState.cooldown = 1.2; // give the new resolution time to settle
+        resize();
+      }
+    }
   }
 
   requestAnimationFrame(frame);

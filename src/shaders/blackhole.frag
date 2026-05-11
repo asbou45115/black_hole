@@ -83,10 +83,12 @@ float valueNoise(vec3 p) {
   return mix(nxy0, nxy1, f.z);
 }
 
+// 3 octaves is plenty for the disk swirl + nebula tint; going higher used
+// to cost ~40% of the per-pixel time during disk crossings.
 float fbm(vec3 p) {
   float v = 0.0;
   float a = 0.5;
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 3; i++) {
     v += a * valueNoise(p);
     p *= 2.02;
     a *= 0.5;
@@ -107,8 +109,8 @@ vec3 starfield(vec3 dir) {
   col += mix(nebulaA, nebulaB, smoothstep(0.45, 0.85, n)) *
          pow(n, 2.0) * uNebulaStrength;
 
-  // Stars: hash 3 grid scales for variety.
-  for (int s = 0; s < 3; s++) {
+  // Stars: 2 grid scales is enough; the 3rd was barely visible.
+  for (int s = 0; s < 2; s++) {
     float scale = 80.0 * pow(2.0, float(s));
     vec3  g = dir * scale;
     vec3  cell = floor(g);
@@ -191,19 +193,22 @@ void main() {
 
   float prevY = rayPos.y;
 
-  for (int i = 0; i < 4096; i++) {
+  // Tight upper bound helps the WebGL compiler reason about the loop.
+  for (int i = 0; i < 1024; i++) {
     if (i >= uMaxSteps) break;
 
-    float r = length(rayPos);
+    float r2 = dot(rayPos, rayPos);
+    float r = sqrt(r2);
     if (r < uRs) { eaten = true; break; }
     if (r > uEscapeRadius) { escaped = true; break; }
 
-    // adaptive step: smaller near the BH so the lensing curls cleanly.
-    float dt = uStepSize * (0.25 + 0.75 * smoothstep(uRs * 1.5, uRs * 12.0, r));
+    // Adaptive step size: tiny near the BH (where the curvature is wild),
+    // up to ~3.5x the base step in nearly-flat space far away. This single
+    // change lets us reach the escape radius in a fraction of the steps.
+    float dt = uStepSize * mix(0.25, 3.5, smoothstep(uRs * 2.0, uRs * 25.0, r));
 
-    // gravitational pull on light
-    float r5 = r * r * r * r * r;
-    vec3 accel = -1.5 * h2 * rayPos / r5;
+    // gravitational pull on light: a = -1.5 * h^2 * r / |r|^5
+    vec3 accel = -1.5 * h2 * rayPos / (r2 * r2 * r);
 
     rayDir = normalize(rayDir + accel * dt);
     vec3 nextPos = rayPos + rayDir * dt;
