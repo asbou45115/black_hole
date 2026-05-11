@@ -57,7 +57,7 @@ controls.update();
 // ---------- parameters ----------
 const params = {
   // physics
-  schwarzschildRadius: 1.0,
+  schwarzschildRadius: 0.75,
   fovY: 60,
 
   // disk
@@ -65,10 +65,10 @@ const params = {
   diskInner: 3.0,        // in units of Rs (ISCO is 3 Rs for Schwarzschild)
   diskOuter: 12.0,
   diskThickness: 0.25,
-  diskColorHot: "#ffd6a3",
-  diskColorCool: "#ff5e2b",
-  diskBrightness: 1.7,
-  diskRotationSpeed: 0.6,
+  diskColourHot: "#ffd6a3",
+  diskColourCool: "#ff5e2b",
+  diskBrightness: 2.0,
+  diskRotationSpeed: 1.0,
   dopplerStrength: 1.0,
 
   // background
@@ -119,8 +119,8 @@ const uniforms = {
   uDiskInner: { value: params.diskInner },
   uDiskOuter: { value: params.diskOuter },
   uDiskThickness: { value: params.diskThickness },
-  uDiskColorHot: { value: new THREE.Color(params.diskColorHot) },
-  uDiskColorCool: { value: new THREE.Color(params.diskColorCool) },
+  uDiskColourHot: { value: new THREE.Color(params.diskColourHot) },
+  uDiskColourCool: { value: new THREE.Color(params.diskColourCool) },
   uDiskBrightness: { value: params.diskBrightness },
   uDiskRotationSpeed: { value: params.diskRotationSpeed },
   uDopplerStrength: { value: params.dopplerStrength },
@@ -187,13 +187,13 @@ diskFolder
   .name("Thickness")
   .onChange((v) => (uniforms.uDiskThickness.value = v));
 diskFolder
-  .addColor(params, "diskColorHot")
-  .name("Inner color")
-  .onChange((v) => uniforms.uDiskColorHot.value.set(v));
+  .addColor(params, "diskColourHot")
+  .name("Inner colour")
+  .onChange((v) => uniforms.uDiskColourHot.value.set(v));
 diskFolder
-  .addColor(params, "diskColorCool")
-  .name("Outer color")
-  .onChange((v) => uniforms.uDiskColorCool.value.set(v));
+  .addColor(params, "diskColourCool")
+  .name("Outer colour")
+  .onChange((v) => uniforms.uDiskColourCool.value.set(v));
 diskFolder
   .add(params, "diskBrightness", 0.0, 5.0, 0.05)
   .name("Brightness")

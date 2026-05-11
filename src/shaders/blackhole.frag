@@ -11,7 +11,7 @@
 precision highp float;
 
 in vec2 vUv;
-out vec4 fragColor;
+out vec4 fragColour;
 
 uniform vec2  uResolution;
 uniform float uTime;
@@ -29,8 +29,8 @@ uniform float uDiskEnabled;
 uniform float uDiskInner;  // in units of Rs
 uniform float uDiskOuter;  // in units of Rs
 uniform float uDiskThickness;
-uniform vec3  uDiskColorHot;
-uniform vec3  uDiskColorCool;
+uniform vec3  uDiskColourHot;
+uniform vec3  uDiskColourCool;
 uniform float uDiskBrightness;
 uniform float uDiskRotationSpeed;
 uniform float uDopplerStrength;
@@ -126,7 +126,7 @@ vec3 starfield(vec3 dir) {
       float d = length(f - jitter);
       float bright = pow(hash11(seed + 4.0), 6.0);
       float core = exp(-d * 70.0) * bright;
-      // give stars a small color tint
+      // give stars a small colour tint
       vec3 tint = mix(vec3(0.85, 0.9, 1.1),
                       vec3(1.1, 0.95, 0.8),
                       hash11(seed + 5.0));
@@ -137,7 +137,7 @@ vec3 starfield(vec3 dir) {
 }
 
 // ---------- accretion disk ----------
-// Disk lies in the y = 0 plane. Returns emitted color when the ray segment
+// Disk lies in the y = 0 plane. Returns emitted colour when the ray segment
 // crosses the plane within the disk's annulus.
 vec3 sampleDisk(vec3 hitPos, vec3 rayDir, float Rs) {
   float r = length(hitPos.xz);
@@ -146,7 +146,7 @@ vec3 sampleDisk(vec3 hitPos, vec3 rayDir, float Rs) {
 
   // Radial profile: hot near ISCO, cool at the edges.
   float t = clamp((rN - uDiskInner) / (uDiskOuter - uDiskInner), 0.0, 1.0);
-  vec3 base = mix(uDiskColorHot, uDiskColorCool, pow(t, 0.6));
+  vec3 base = mix(uDiskColourHot, uDiskColourCool, pow(t, 0.6));
 
   // Azimuthal turbulence — gives the streaky rotating texture.
   float phi  = atan(hitPos.z, hitPos.x);
@@ -258,5 +258,5 @@ void main() {
   col = col / (1.0 + col * 0.6);
   col = pow(col, vec3(1.0 / 2.2));
 
-  fragColor = vec4(col, 1.0);
+  fragColour = vec4(col, 1.0);
 }

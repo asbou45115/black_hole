@@ -1,6 +1,6 @@
 # Black Hole
 
-An interactive WebGL visualization of a Schwarzschild black hole — gravitational lensing, accretion disk with relativistic Doppler beaming, procedural starfield — all rendered live in a fragment shader.
+An interactive WebGL visualization of a Schwarzschild black hole - gravitational lensing, accretion disk with relativistic Doppler beaming, procedural starfield - all rendered live in a fragment shader.
 
 - **Drag** to orbit the black hole
 - **Scroll** to zoom
@@ -11,19 +11,13 @@ The whole thing is a static site (HTML + JS + GLSL), so it deploys to GitHub Pag
 
 ## Run locally
 
-`uv` is used purely as a convenient way to spin up Python's built-in HTTP server (no Python dependencies are required).
+Ensure python at least 3.11 is installed. Run the following in the terminal:
 
 ```bash
-uv run python -m http.server 8000
+python -m http.server 8000
 ```
 
-Then open <http://localhost:8000> in a modern browser (Chrome, Firefox, Safari, Edge — anything with WebGL 2). Any other static file server works too:
-
-```bash
-python3 -m http.server 8000
-# or
-npx serve .
-```
+Then open <http://localhost:8000> in a modern browser (Chrome, Firefox, Safari, Edge - anything with WebGL 2). 
 
 ## Deploy to GitHub Pages
 
@@ -62,7 +56,7 @@ The fragment shader does all the physics. For each pixel it:
    - if it crosses the equatorial plane inside the disk's annulus it picks up emission with a Shakura-Sunyaev-ish radial temperature profile and a relativistic Doppler beaming factor `D³`,
    - if it escapes past the configured escape radius it samples a procedural starfield + nebula.
 
-Three.js handles the WebGL plumbing, the camera, and `OrbitControls`; the actual perspective camera is "virtual" — its position and basis vectors are forwarded to the shader as uniforms each frame, while the geometry rendered is just a single full-screen quad.
+Three.js handles the WebGL plumbing, the camera, and `OrbitControls`; the actual perspective camera is "virtual" - its position and basis vectors are forwarded to the shader as uniforms each frame, while the geometry rendered is just a single full-screen quad.
 
 ## Tweaking ideas
 
