@@ -25,6 +25,10 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          # Auto-enable Pages on the repo on first run, so we don't have to
+          # toggle it manually in Settings → Pages first.
+          enablement: true
 
       - name: Stage site
         run: |
