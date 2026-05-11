@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Black Hole — interactive gravitational lensing</title>
+    <meta
+      name="description"
+      content="Real-time WebGL Schwarzschild black hole simulation with an accretion disk and adjustable parameters."
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='30' fill='black' stroke='orange' stroke-width='4'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./src/style.css" />
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/",
+          "lil-gui": "https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.esm.min.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="view"></canvas>
+
+    <div id="overlay">
+      <div id="title">
+        <h1>Schwarzschild Black Hole</h1>
+        <p>
+          Drag to orbit · Scroll to zoom · Right-drag to pan
+        </p>
+      </div>
+      <div id="stats"><span id="fps">0</span> fps</div>
+    </div>
+
+    <div id="loader">
+      <div class="ring"></div>
+      <p>Bending spacetime…</p>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

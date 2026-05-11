@@ -1,0 +1,14 @@
+[project]
+name = "black-hole"
+version = "0.1.0"
+description = "Interactive WebGL black hole visualizer (gravitational lensing in real time)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+# This project is a static web app (HTML/JS/GLSL). uv is only used to run a
+# local development web server via Python's standard library:
+#
+#   uv run python -m http.server 8000
+#
+# Then open http://localhost:8000 in your browser.
