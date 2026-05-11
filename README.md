@@ -1,6 +1,7 @@
 # Black Hole
 
-An interactive WebGL visualization of a Schwarzschild black hole - gravitational lensing, accretion disk with relativistic Doppler beaming, procedural starfield - all rendered live in a fragment shader.
+An interactive WebGL visualisation of a Schwarzschild black hole - gravitational lensing, accretion disk with relativistic Doppler beaming, procedural starfield - all rendered live in a fragment shader. 
+Check it out [here](https://asbou45115.github.io/black_hole/)
 
 - **Drag** to orbit the black hole
 - **Scroll** to zoom
